@@ -1,0 +1,55 @@
+﻿
+@using Escuela.Data
+
+<div class="columns small-12 large-2 ">
+    <div class="row ">
+
+        <div class="row columns small-12 margin-1">
+            <div class="columns small-12 padding-1 margin-vertical sombraBox ColorFondo_Blanco radio-5">
+                Miss:    <br>
+                Edad:  <br>
+            </div>
+            <button class="columns small-12 padding-1 margin-vertical  sombraBox button ">
+                Horario
+            </button>
+        </div>
+
+        <div class="row columns small-12  margin-vertical padding-1 sombraBox radio-5 ColorFondo_Blanco">
+            <div class="columns small-12">
+                <select class="" @bind="Opcion">
+                    Objeto a Visualizar
+                    <option selected disabled>seleccione un recurso</option> 
+                    <option id="clase" value="clase">Clase</option>
+                    <option id="alumno" value="alumno">Alumno</option>
+                    <option id="actividad" value="actividad">Actividad</option>
+                    <option id="recursos" value="rescursos">Recursos</option>
+                </select>
+            </div>
+            <div class="columns small-12">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="columns small-12 large-10 padding-1 radio-5">
+    @if (Opcion == "clase")
+    {<Maestro_VisorClase />;
+    }
+    @if (Opcion == "alumno")
+    {<Maestro_VisorClase />;
+    }
+    @if (Opcion == "actividad")
+    {<Maestro_VisorClase />;
+    }
+    @if (Opcion == "rescursos")
+    {<Maestro_VisorRecursos />;
+    }
+
+</div>
+
+
+@code {
+    public string Opcion = "";
+
+}

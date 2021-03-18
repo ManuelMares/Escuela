@@ -1,0 +1,1804 @@
+﻿@using Escuela.Data
+@inject IJSRuntime JsRuntime
+
+
+@if (bandera == false && Grupo.Alumnos.Count() > 0)
+{
+    <h1>Cargando...</h1>
+}
+else
+{
+    <!--EDITAR CLASE-->
+    @if (banderaEditarClase == true)
+    {
+        <div class="modalFondo">
+            <div class="modalTarjeta">
+                <div class="modalEncabezado" style="background-color: @(ClaseEscogida.Color);">
+                    Editar @(ClaseEscogida.Nombre)
+                </div>
+
+                <div class="modalCuerpo texto-1">
+                    <i class="fas fa-pen"></i> Nombre:<br />
+                    <input class="inputTextoDescripcion margin-vertical" style="border: 1px solid @(ClaseEscogida.Color);" value="@(ClaseEscogida.Nombre)"
+                           @onchange="@( (ChangeEventArgs __e) => nuevoNombreClase = __e.Value.ToString())" /> <br>
+
+                    <i class="fas fa-pen"></i> Horario: @(ClaseEscogida.Horario.Duracion)<br />
+                    <input class="inputTextoDescripcion margin-vertical" style="border: 1px solid @(ClaseEscogida.Color); color:white" value="@(ClaseEscogida.MostrarHorario())"
+                           @onchange="@( (ChangeEventArgs __e) => ClaseEscogida.ActualizarHorario(new Horario(DateTime.Parse(__e.Value.ToString()), DateTime.Parse(__e.Value.ToString()))))" /> <br>
+                    <i class="fas fa-pen"></i> Color
+                    <div class="dropdown">
+                        <a class="btn dropdown-toggle" style="background-color: @(ClaseEscogida.Color); color: white" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            @(ClaseEscogida.Color)
+                        </a>
+                        <ul class="dropdown-menu tam-menu" aria-labelledby="dropdownMenuLink" @onchange="@( (ChangeEventArgs __e) => ActualizarColor(__e.Value.ToString()))">
+                            @foreach (var color in Grupo.Colores)
+                            {
+                                <li>
+                                    <a class="dropdown-item" style="background-color: @(color);" @onclick="@( e => ActualizarColor(color))">
+                                        <div class="muestraColor">@(color)</div>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <i class="fas fa-pen margin-vertical"> Parámetros</i>
+                    <div class="modalParametros">
+
+                        <div class="entradaParametro">
+                            <a class="entradaParametro_BotonEliminar"> // </a>
+                            <a class="entradaParametro_Parametro">Asistencia</a><br>
+                            <input type="number" class="entradaParametro_Valor" value="@(Grupo.Alumnos[0].Asistencias_TotalEfectivaPorcentajeCalificacion["porcentaje"])"
+                                   @onchange="@( (ChangeEventArgs __e) => actualizarPorcentajeAsistencia( Convert.ToDouble((__e.Value.ToString()))))" /><br>
+                        </div>
+                        @foreach (var parametro in ClaseEscogida.PromediosTipo)
+                        {
+                            <div class="entradaParametro">
+                                <a class="entradaParametro_BotonEliminar" @onclick="@(ConfirmarEliminacionParametro)">-</a>
+                                <input type="text" class="entradaParametro_Parametro" value="@(parametro.Key)"
+                                       @onchange="@( (ChangeEventArgs __e) => actualizarNombreParametro(parametro.Key, (__e.Value.ToString())))" /><br>
+
+                                <input type="number" class="entradaParametro_Valor" value="@(parametro.Value["porcentaje"])"
+                                       @onchange="@( (ChangeEventArgs __e) => actualizarValorParametro(parametro.Key, Convert.ToDouble((__e.Value.ToString()))))" /><br>
+                            </div>
+                        }
+                        <a class="entradaParametro_BotonAgregar" @onclick="@(AgregarParametro)">+</a>
+                    </div>
+
+                </div>
+
+                <div class="modalPiePagina">
+                    <div class="claseEditorMensaje">
+                        @(ClaseEditorMensaje)
+                    </div>
+                    <a class="button alert margin-horizontal" @onclick="@(DescartarCambiosClase)">Descartar cambios</a>
+                    <a class="button success margin-horizontal" @onclick="@(GuardarCambiosClase)">Guardar cambios</a>
+
+                </div>
+            </div>
+        </div>
+    }
+
+    <!--EDITAR ACTIVIDAD-->
+    @if (banderaEditarActividad == true)
+    {
+        <div class="modalFondo">
+            <div class="modalTarjeta">
+                <div class="modalEncabezado" style="background-color: @(ClaseEscogida.Color);">
+                    Editar @(actividadEscogida.Nombre)
+                </div>
+
+                <div class="modalCuerpo texto-1">
+                    <i class="fas fa-pen"></i> Nombre:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(actividadEscogida.Nombre)"
+                           @onchange="@( (ChangeEventArgs __e) => ActualizarNombreActividad(__e.Value.ToString()))" /> <br>
+
+
+                    <i class="fas fa-pen"></i> Tipo de Actividad <br />
+                    <div class="dropdown">
+                        <a class="btn dropdown-toggle" style="border: 1px solid @(ClaseEscogida.Color); background-color: white;" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                            @(actividadEscogida.TipoActividad)
+                        </a>
+                        <ul class="dropdown-menu tam-menu" style="border: 1px solid @(ClaseEscogida.Color);" aria-labelledby="dropdownMenuLink" @onchange="@( (ChangeEventArgs __e) => ActualizarColor(__e.Value.ToString()))">
+                            @foreach (var opcion in actividadEscogida.TipoActividadOpciones)
+                            {
+                                <li>
+                                    @if (opcion == actividadEscogida.TipoActividad)
+                                    {
+                                        <a class="dropdown-item" style="background-color: @(ClaseEscogida.Color);" @onclick="@( e => actividadEscogida.ActualizarTipoActividad(opcion))">
+                                            <div class="muestraColor">@(opcion)</div>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a class="dropdown-item" @onclick="@( e => actividadEscogida.ActualizarTipoActividad(opcion))">
+                                            <div class="muestraColor">@(opcion)</div>
+                                        </a>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </div>
+
+                    <i class="fas fa-pen"></i> Instrucción:<br />
+                    <textarea class="inputTextoDescripcion " style="border: 1px solid @(ClaseEscogida.Color);" value="@(actividadEscogida.Instruccion)"
+                              @onchange="@( (ChangeEventArgs __e) => actividadEscogida.ActualizarInstruccion(__e.Value.ToString()))" /> <br>
+
+                    <i class="fas fa-pen"></i> Porcentaje: <br />
+                    <input type="number" class="inputNumero margin-vertical" style="border: 1px solid @(ClaseEscogida.Color); background-color:white;" value="@(actividadEscogida.Porcentaje)"
+                           @onchange="@( (ChangeEventArgs __e) => actividadEscogida.ActualizarPorcentaje(Convert.ToInt32((__e.Value.ToString()))))" /> <br>
+
+                    <i class="fas fa-pen"></i> Fecha Asignacion:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(actividadEscogida.FechaAsignacion.ToString("yyyy/mm/dd"))" /> <br>
+
+                    <i class="fas fa-pen"></i> Fecha Entrega: <br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(actividadEscogida.FechaEntrega.ToString("yyyy/mm/dd"))" /> <br>
+
+
+                    <i class="fas fa-pen"></i> Nota: <br />
+                    <textarea class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(actividadEscogida.Nota)"
+                              @onchange="@( (ChangeEventArgs __e) => actividadEscogida.ActualizarNota(__e.Value.ToString()))" /> <br>
+
+
+                    <div class="modalParametros">
+                    </div>
+
+
+                </div>
+
+                <div class="modalPiePagina">
+                    <div class="claseEditorMensaje">
+                        @(ActividadEditorMensaje)
+                    </div>
+                    <a class="button alert margin-horizontal" @onclick="@(DescartarCambiosActividad)">Descartar cambios</a>
+                    <a class="button success margin-horizontal" @onclick="@(GuardarCambiosActividad)">Guardar cambios</a>
+
+                </div>
+            </div>
+        </div>
+    }
+
+
+    <!--EDITAR ALUMNO-->
+    @if (banderaEditarAlumno == true)
+    {
+        string nombresAlumno = "";
+        string apellidosAlumno = "";
+        foreach (var nombre in alumnoAEditar.Nombres)
+        {
+            nombresAlumno += nombre;
+            nombresAlumno += " ";
+        }
+        foreach (var apellido in alumnoAEditar.Apellidos)
+        {
+            apellidosAlumno += apellido;
+            apellidosAlumno += " ";
+        }
+        <div class="modalFondo">
+            <div class="modalTarjeta">
+                <div class="modalEncabezado" style="background-color: @(ClaseEscogida.Color);">
+                    Editar @(alumnoAEditar.NombreCompleto)
+                </div>
+
+                <div class="modalCuerpo texto-1">
+                    <i class="fas fa-pen"></i> Nombres:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@( nombresAlumno)"
+                           @onchange="@( (ChangeEventArgs __e) => AlumnoEditar_Nombres(__e.Value.ToString()))" /> <br>
+
+                    <i class="fas fa-pen"></i> Apellidos:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(apellidosAlumno)"
+                           @onchange="@( (ChangeEventArgs __e) => AlumnoEditar_Apellidos(__e.Value.ToString()))" /> <br>
+
+                    <i class="fas fa-pen"></i> Apodo:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(alumnoAEditar.Apodo)"
+                           @onchange="@( (ChangeEventArgs __e) => alumnoAEditar.Actualizar_Apodo(__e.Value.ToString()))" /> <br>
+
+                    <i class="fas fa-pen"></i> Fecha de nacimiento:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(alumnoAEditar.FechaNacimiento.ToString("yyyy/mm/dd"))"
+                           @onchange="@( (ChangeEventArgs __e) => alumnoAEditar.Actualizar_FechaNacimiento(Convert.ToDateTime(__e.Value.ToString())))" /> <br>
+
+                    <i class="fas fa-pen"></i> Nota:<br />
+                    <input class="inputTextoDescripcion" style="border: 1px solid @(ClaseEscogida.Color);" value="@(alumnoAEditar.Nota)"
+                           @onchange="@( (ChangeEventArgs __e) => alumnoAEditar.Actualizar_Nota(__e.Value.ToString()))" /> <br>
+
+                </div>
+
+                <div class="modalPiePagina">
+                    <a class="button alert margin-horizontal" @onclick="@(DescartarCambiosAlumno)">Descartar cambios</a>
+                    <a class="button success margin-horizontal" @onclick="@(GuardarCambiosAlumno)">Guardar cambios</a>
+
+                </div>
+            </div>
+        </div>
+    }
+
+
+    <!--AGREGAR RECURSOS-->
+    @if (banderaRecursos == true)
+    {
+        <div class="modalFondo">
+            <div class="modalTarjeta">
+                <div class="modalEncabezado" style="background-color: @(ClaseEscogida.Color); ">
+                    Agregar recursos a la actividad
+                    <button class="button alert" @onclick=@(CerrarModalAgregarRecursos)>X </button>
+                </div>
+                <div class="contenedor_modalRecursos" style="border: 1px solid @(ClaseEscogida.Color);">
+
+                    <!--Nuevo recurso-->
+                    <div class="modalRecursos_Nuevo">
+                        <div>
+                            Nombre: <input type="text" class="inputTexto" style="border: 1px solid @(ClaseEscogida.Color);" @onchange="e => nuevoRecurso.Actualizar_Nombre(e.Value.ToString())" value="@(nuevoRecurso.Nombre)" />
+                        </div>
+                        <div>
+                            Descripción: <input type="text" class="inputTexto" style="border: 1px solid @(ClaseEscogida.Color);" @onchange="e => nuevoRecurso.Actualizar_Descripcion(e.Value.ToString())" value="@(nuevoRecurso.Descripcion)" />
+                        </div>
+                        <div>
+                            Link: <input type="text" class="inputTexto" style="border: 1px solid @(ClaseEscogida.Color);" @onchange="e => nuevoRecurso.Actualizar_Link(e.Value.ToString())" value="@(nuevoRecurso.Link)" />
+                        </div>
+                        <div>
+                            Fecha: <input type="text" class="inputTexto" style="border: 1px solid @(ClaseEscogida.Color);" @onchange="e => nuevoRecurso.Actualizar_Fecha(DateTime.Parse(e.Value.ToString()))" value="@(DateTime.Today.ToString("yyyy/mm/dd") )" />
+                        </div>
+
+                        <!--Esta es la sección de etiquetas /!-->
+                        <div class="margin-vertical cuadroBorde">
+                            <fieldset>
+                                <legend>Indique las etiquetas que desea incluir:</legend>
+
+                                @foreach (var etiq in Grupo.Recursos_Etiquetas)
+                                {
+                                    if (nuevoRecurso.Etiquetas.Contains(etiq))
+                                    {
+                                        <input id="checkbox1" checked type="checkbox" @onchange="eventArgs => { AgregarEtiqueta_NuevoRecurso(etiq); }"><label for="checkbox1">@(etiq)</label>
+                                    }
+                                    else
+                                    {
+                                        <input id="checkbox1" type="checkbox" @onchange="eventArgs => { AgregarEtiqueta_NuevoRecurso(etiq); }"><label for="checkbox1">@(etiq)</label>
+                                    }
+                                }
+                            </fieldset>
+                        </div>
+
+                        <!--Esta es la sección de carpetas /!-->
+
+                        <div class="margin-vertical cuadroBorde">
+                            <fieldset>
+                                <legend>Indique las carpetas que desea incluir:</legend>
+
+                                @foreach (var carp in Grupo.Recursos_Carpetas)
+                                {
+                                    if (nuevoRecurso.Carpetas.Contains(carp))
+                                    {
+                                        <input id="checkbox1" checked type="checkbox" @onchange="eventArgs => { AgregarCarpeta_NuevoRecurso(carp); }"><label for="checkbox1">@(carp)</label>
+                                    }
+                                    else
+                                    {
+                                        <input id="checkbox1" type="checkbox" @onchange="eventArgs => { AgregarCarpeta_NuevoRecurso(carp); }"><label for="checkbox1">@(carp)</label>
+                                    }
+                                }
+                            </fieldset>
+                        </div>
+
+
+
+
+                        @if (RecursoEditarIndice >= 0)
+                        {
+                            <button class="button success" @onclick=@(CrearNuevoRecurso)>Guardar recurso </button>
+                        }
+                        else
+                        {
+                            <button class="button success" @onclick=@(CrearNuevoRecurso)>Crear recurso </button>
+                        }
+                        @mensajeRecurso
+
+                    </div>
+
+                    <!--Recursos enlazados-->
+                    <h5>Recursos Enlazados</h5>
+                    @if (recursosSiEnlazados.Count > 0)
+                    {
+                        <div class="modalRecursos_RecursosEnlazados" style="border: 1px solid @(ClaseEscogida.Color);">
+                            <table>
+                                <tbody>
+                                    <!--titulos-->
+                                    <tr>
+                                        <td class="">
+                                            Nombre
+                                        </td>
+                                        <td class="">
+                                            Link
+                                        </td>
+                                        <td class="">
+                                            Estado:
+                                        </td>
+                                    </tr>
+
+                                    <!--cuerpo-->
+                                    @foreach (var recurso in recursosSiEnlazados)
+                                    {
+                                        <tr>
+                                            <td class="">
+                                                <a>
+                                                    <i class="fas fa-pencil-alt" @onclick=@(e => EditarRecurso(recurso))></i>
+                                                    @(recurso.Nombre.Substring(0, recurso.Nombre.Length > 30 ? 30 : recurso.Nombre.Length))...
+                                                </a>
+                                            </td>
+                                            <td class="">
+                                                @(recurso.Link.Substring(0, recurso.Link.Length > 30 ? 30 : recurso.Link.Length))...
+                                                <a @onclick=@(e => CopiarLink(recurso.Link))>      <i class="fas fa-link textoNegro"></i>   </a>
+                                                <a @onclick=@(e => CopiarInfoRecurso(recurso))>    <i class="far fa-copy textoNegro"></i>   </a>
+                                            </td>
+                                            <td>
+                                                <button class="button alert" @onclick=@(e => EliminarDeRecursosEnlazdos(recurso))>Desligar</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                    }
+
+                    <!--Recursos No enlazados-->
+                    <h5>Recursos no Enlazados</h5>
+                    <div class="modalRecursos_RecursosNoEnlazados " style="border: 1px solid @(ClaseEscogida.Color);">
+                        <table class="">
+                            <tbody>
+                                <!--titulos-->
+                                <tr>
+                                    <td class="">
+                                        Nombre
+                                    </td>
+                                    <td class="">
+                                        Link
+                                    </td>
+                                    <td class="">
+                                        Estado
+                                    </td>
+                                </tr>
+
+                                <!--cuerpo-->
+                                @foreach (var recurso in recursosNoEnlazados)
+                                {
+                                    <tr>
+                                        <td class="">
+                                            <a>
+                                                <i class="fas fa-pencil-alt" @onclick=@(e => EditarRecurso(recurso))></i>
+                                                @(recurso.Nombre.Substring(0, recurso.Nombre.Length > 30 ? 30 : recurso.Nombre.Length))...
+                                            </a>
+                                        </td>
+                                        <td class="">
+                                            @(recurso.Link.Substring(0, recurso.Link.Length > 30 ? 30 : recurso.Link.Length))...
+                                            <a @onclick=@(e => CopiarLink(recurso.Link))>      <i class="fas fa-link textoNegro"></i>   </a>
+                                            <a @onclick=@(e => CopiarInfoRecurso(recurso))>    <i class="far fa-copy textoNegro"></i>   </a>
+                                        </td>
+                                        <td>
+                                            <button class="button success" @onclick=@(e => AgregarARecursosEnlazdos(recurso))>ligar </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+
+    <!--DATOS GRUPOS-->
+    <div class="sombraBox fondoMorado margin-vertical padding-1">
+        <h2 class="texto-Blanco">Grupo</h2>
+        <div class="contenedorGrupoDato">
+            <i class="texto-Blanco fas fa-pen"></i> <h4 class="texto-Blanco">Nombre: </h4> <input class="inputGrupoParametros" value="@(Grupo.Nombre)"
+                                                                                                  @onchange="@( (ChangeEventArgs __e) => ActualizarNombreGrupo(__e.Value.ToString()))" />
+        </div>
+        <div class="contenedorGrupoDato">
+            <i class="texto-Blanco fas fa-pen"></i> <h4 class="texto-Blanco">Generación: </h4> <input class="inputGrupoParametros" value="@(Grupo.Generacion)"
+                                                                                                      @onchange="@( (ChangeEventArgs __e) => ActualizarGeneracionGrupo(Convert.ToInt32(__e.Value.ToString())))" /><br />
+        </div>
+        <div class="contenedorGrupoDato">
+            <i class="texto-Blanco fas fa-pen"></i> <h4 class="texto-Blanco">Grado: </h4> <input type="number" class="inputGrupoParametros" value="@(Grupo.Grado)"
+                                                                                                 @onchange="@( (ChangeEventArgs __e) => ActualizarGradoGrupo(__e.Value.ToString()))" /><br />
+        </div>
+
+        <h4 class="texto-Blanco">Promedio General: @(Math.Round(Grupo.Promedio, decimales))</h4>
+    </div>
+
+    <!--ASISTENCIA-->
+    <div class="padding-1 ColorFondo_Blanco  margin-vertical sombraBox">
+        <!--ENCABEZADO-->
+        <div>
+            <h3 class="">Promedios Generales</h3>
+        </div>
+        <div class="@mostrarPromedios">
+            <!--TABLA DE ASISTENCIAS-->
+            <div class="tablaActividades" id="tablaRecursos">
+
+                <!--Titulos /!-->
+                <table class="tablaActividades_Alumnos">
+                    <tbody>
+                        <tr>
+                            <td class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                                Nombre
+                            </td>
+                        </tr>
+                        @foreach (var alumno in Grupo.Alumnos)
+                        {
+                            <tr>
+                                <a class="linea">
+                                    <td class="TamCelda alturaCelda cotenedorAlumno">
+                                        @(alumno.NombreCompleto)
+                                        (@(alumno.Apodo))
+                                    </td>
+                                </a>
+                            </tr>
+                        }
+
+                    <td class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                    </td>
+                    </tbody>
+                </table>
+
+                <!--Promedios /!-->
+                <div class="contenedorCentrado">
+                    <div class="tablaActividades_Calificaciones">
+                    <table>
+                        <tbody>
+                            <tr>
+                                @foreach (var clase in Grupo.Clases)
+                                {
+                                    <td class="TamCelda alturaCelda texto-Blanco fondoMorado2">
+
+                                        @(clase.Nombre)
+                                        @(clase.ClasePorcentaje)
+                                    </td>
+                                }
+
+                            </tr>
+                            @foreach (var alumno in Grupo.Alumnos)
+                            {
+                                <tr>
+                                    @foreach (var califClase in alumno.Promedio_Clase_PromedioPorcentaje)
+                                    {
+                                        <td class="alturaCelda ">
+                                             @(Math.Round(califClase.Value["promedio"], decimales))
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                            <tr>
+                                @foreach (var clase in Grupo.Clases)
+                                {
+                                    <td class="TamCelda alturaCelda texto-Blanco fondoMorado2">
+                                        @(Math.Round(clase.Promedio, decimales))
+                                    </td>
+                                }
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <!--Promedio por alumno /!-->
+                <table class="tablaActividades_Alumnos">
+                    <tbody>
+                        <tr>
+                            <th class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                                Total 
+                            </th>
+                        </tr>
+                        @foreach (var alumno in Grupo.Alumnos)
+                        {
+                            <tr>
+                                <td class="TamCelda alturaCelda">
+                                    @(Math.Round(alumno.PromedioGeneral, decimales))
+                                </td>
+                            </tr>
+                        }
+                    <th class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                        @(Math.Round(Grupo.Promedio, decimales) )
+                    </th>
+                    </tbody>
+                </table>
+
+
+            </div>
+            Los promedios por alumno y general pueden no coincidir con los obtenidos por cada clase en esta misma tabla. Esto se debe a que
+            a estos valores hace falta agregarles el porcentaje de asistencia
+        </div>
+        <div class="contenedorCentrado ">
+            <a @onclick="VerOcultarContenedorPromedio"><h2><i class="fas fa-ellipsis-h "></i></h2></a>
+        </div>
+    </div>
+
+        <!--ASISTENCIA-->
+        <div class="padding-1 ColorFondo_Blanco  margin-vertical sombraBox">
+            <!--ENCABEZADO-->
+            <div>
+                <h3 class="">Administrador de Asistencias</h3>
+            </div>
+            <div class="@mostrarAsistencia">
+                <!--TABLA DE ASISTENCIAS-->
+                <div class="tablaActividades" id="tablaRecursos">
+
+                    <!--Titulos /!-->
+                    <table class="tablaActividades_Alumnos">
+                        <tbody>
+                            <tr>
+                                <td class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                                    Nombre
+                                </td>
+                            </tr>
+                            @foreach (var alumno in Grupo.Alumnos)
+                            {
+                                <tr>
+                                    <a class="linea">
+                                        <td class="TamCelda alturaCelda cotenedorAlumno">
+                                            @(alumno.NombreCompleto)
+                                            (@(alumno.Apodo))
+                                        </td>
+                                    </a>
+                                </tr>
+                            }
+
+                        <td class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                        </td>
+                        </tbody>
+                    </table>
+
+                    <!--Asistencias /!-->
+                    <div class="contenedorCentrado">
+                        <div class="tablaActividades_Calificaciones">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    @foreach (var dia in Grupo.Alumnos[0].Asistencias)
+                                    {
+                                        <td class="TamCelda alturaCelda fondoMorado2">
+
+                                            <input type="text" class="inputFecha" @onchange="(ChangeEventArgs __e) => { ActualizarFechaAsistencia(dia.Key, DateTime.Parse(__e.Value.ToString())); }"
+                                                   value="@(dia.Key.ToString("dd-MM-yyyy"))" />
+                                        </td>
+                                    }
+
+                                    <td class="TamCelda alturaCelda fondoMorado2">
+                                        <a class="boton align-center" @onclick=@(CrearNuevaFechaAsistencia)>
+                                            Nueva fecha
+                                        </a>
+                                    </td>
+                                </tr>
+                                @foreach (var alumno in Grupo.Alumnos)
+                                {
+                                    <tr>
+                                        @foreach (var asistencia in alumno.Asistencias)
+                                        {
+                                            <td class="alturaCelda">
+                                                <input @key="asistencia.Key" type="checkbox" class="tamCheckBox" value="@(asistencia.Value)" checked="@(asistencia.Value)"
+                                                       @onchange="@( eventArgs => alumno.Asistencias_ActualizarValor(asistencia.Key, (bool)eventArgs.Value) )" />
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+
+                                @foreach (var dia in Grupo.Alumnos[0].Asistencias)
+                                {
+                                <td class="TamCelda alturaCelda fondoMorado2">
+                                    <a class="botonEliminar" @onclick=@((e) => { EliminarFechaAsistencia(dia.Key); })>
+                                        Eliminar
+                                    </a>
+                                </td>
+                            }
+
+                                <td class="TamCelda alturaCelda fondoMorado2">
+                                </td>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!--Promedio por alumno /!-->
+                    <table class="tablaActividades_Alumnos">
+                        <tbody>
+                            <tr>
+                                <th class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                                    Total (@(Grupo.Alumnos[0].Asistencias.Count()) )
+                                </th>
+                            </tr>
+                            @foreach (var alumno in Grupo.Alumnos)
+                            {
+                                <tr>
+                                    <td class="TamCelda alturaCelda">
+                                        @(alumno.Asistencias_TotalEfectivaPorcentajeCalificacion["asistenciaEfectiva"])
+                                        (@(Math.Round(alumno.Asistencias_TotalEfectivaPorcentajeCalificacion["calificacion"], 2))p)
+                                    </td>
+                                </tr>
+                            }
+                        <th class="TamCelda alturaCelda texto-1 texto-Blanco fondoMorado2">
+                            V.T. (@(Grupo.Alumnos[0].Asistencias_TotalEfectivaPorcentajeCalificacion["porcentaje"]) )
+                        </th>
+                        </tbody>
+                    </table>
+                </div>
+        </div>
+        <div class="contenedorCentrado ">
+            <a @onclick="VerOcultarContenedorAsistencia"><h2><i class="fas fa-ellipsis-h "></i></h2></a>
+        </div>
+    </div>
+
+    <div class="padding-1 ColorFondo_Blanco margin-vertical  sombraBox">
+        <h3>Administrador de Clases</h3>
+        <!--BOTONES PARA ESCOGER CLASE-->
+        <div class="Clase_botones">
+            <div class="button-group">
+                @foreach (var clase in Grupo.Clases)
+                {
+                    <a class="button" style="background-color: @(clase.Color);"
+                        @onclick=@(e => MostrarClase(clase))>@(clase.Nombre)</a>
+                }
+
+                <a class="button button_AgregarClase"
+                    @onclick=@(AgregarClase)>Agregar clase +</a>
+            </div>
+        </div>
+
+        @if (banderaClase)
+        {
+            <!--INFORMACIÓN DE LA CLASE-->
+            <div class="contenedorClaseInformacion margin-vertical" style="background-color: @(ClaseEscogida.Color);">
+                <div class="encabezadoClaseInformacion texto-1 texto-Blanco">
+                    @(ClaseEscogida.Nombre)   @(ClaseEscogida.Generacion)
+                    <div>
+                        <a @onclick=@(EliminarClase)><i class="texto-Blanco fas fa-trash-alt"></i></a>
+                        <a @onclick=@(EditarClase)><i class="texto-Blanco far fa-edit"></i></a>
+                    </div>
+                </div>
+                <div class="cuerpoClaseInformacion">
+                    @foreach (var parametro in ClaseEscogida.PromediosTipo)
+                    {
+                        <h1 class="texto-1 texto-Blanco">
+                            @(parametro.Key)
+                            @(parametro.Value["porcentaje"]) <br />
+                        </h1>
+                    }
+
+                    <h1 class="texto-1 texto-Blanco">
+                        Asistencia:
+                        @(Grupo.Alumnos[0].Asistencias_TotalEfectivaPorcentajeCalificacion["porcentaje"]) <br />
+                    </h1>
+                </div>
+            </div>
+
+
+
+
+
+            <!--FILTROS-->
+            <div class="filtrosClase texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">
+                <!--ORDEN DE ALUMNOS-->
+                <div class="dropdown align-center">
+                    <a class="btn dropdown-toggle texto-Blanco" style="background-color: @(ClaseEscogida.Color);" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-filter texto-Blanco"></i>Alumno
+                    </a>
+                    <ul class="dropdown-menu tam-menu" aria-labelledby="dropdownMenuLink">
+                        @foreach (var orden in Grupo.Ordenamientos)
+                        {
+                            <li>
+                                <a class="dropdown-item texto-1" @onclick="@(e => Grupo.OrdenarAlumnos(orden))">
+                                    @(orden)
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <!--ORDEN DE ACTIVIDADES-->
+                <div class="dropdown align-center">
+                    <a class="btn dropdown-toggle texto-Blanco" style="background-color: @(ClaseEscogida.Color);" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-filter texto-Blanco"></i>Tipo Actividad
+                    </a>
+                    <ul class="dropdown-menu tam-menu" aria-labelledby="dropdownMenuLink">
+                        <li>
+                            <a class="dropdown-item texto-1" @onclick="@(FiltrarTodosTiposActividades)">
+                                Todos
+                            </a>
+                        </li>
+                        @foreach (var tipo in Grupo.Clases[ClaseIndice].PromediosTipo)
+                        {
+                            <li>
+                                <a class="dropdown-item texto-1" @onclick="@(e => filtroTipoActividades = new List<string>() {tipo.Key})">
+                                    @(tipo.Key)  (@(Grupo.Actividades[ClaseEscogida.Nombre][tipo.Key].Count()))
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+                <!--DECIMALES-->
+                <div class="contanedorDecimales align-center">
+                    Decimales
+                    <input type="number" class="inputPorcentaje texto-1" value="@(decimales)"
+                            @onchange="@( (ChangeEventArgs __e) => decimales = Convert.ToInt32((__e.Value.ToString())) )" />
+                </div>
+
+                <!--NUEVA ACTIVIDAD-->
+                <a class="button success align-center" @onclick=@(CrearNuevaActividad)>Nueva Actividad</a>
+            </div>
+
+
+
+            @if (banderaActivdad)
+            {
+                <!--INFORMACIÓN ACTIVIDAD-->
+                <div class="contenedorActividadInformacion" style="border-right: 2px solid @(ClaseEscogida.Color); border-left: 2px solid @(ClaseEscogida.Color);">
+                    <div class="infoActividad_Encabezado texto-1">
+                        <a class="margin-horizontal" @onclick=@(EliminarActividad)><i class="fas fa-trash-alt" style="color: @(ClaseEscogida.Color);"></i></a>
+                        <a class="margin-horizontal" @onclick=@(ModalEditarActividad)><i class="far fa-edit" style="color: @(ClaseEscogida.Color);"></i></a>
+                        <a class="margin-horizontal" @onclick=@(e => banderaActivdad = false)><i class="fas fa-eye-slash" style="color: @(ClaseEscogida.Color);"></i></a>
+                    </div>
+                    <div class="infoActividad_Cuerpo texto-1">
+                        @(actividadEscogida.Nombre)<br />
+                        @(actividadEscogida.Instruccion)<br />
+                        @(actividadEscogida.FechaAsignacion.ToString("yyyy/mm/dd"))<br />
+                        @(actividadEscogida.FechaEntrega.ToString("yyyy/mm/dd"))<br />
+                        @(actividadEscogida.Nota)<br />
+                        @(actividadEscogida.TipoActividad)<br />
+                    </div>
+                    <div>
+                        <table class="listaRecursosActividad">
+                            <tbody>
+                                <!--titulos-->
+                                <tr>
+                                    <td class="">
+                                        Nombre
+                                    </td>
+                                    <td class="">
+                                        Link
+                                    </td>
+                                    <td class="">
+                                        <button class="button success" style="border: 1px solid @(ClaseEscogida.Color);" @onclick="AgregarRecursos"> Administrar</button>
+                                    </td>
+                                </tr>
+
+                                <!--cuerpo-->
+                                @foreach (var recurso in listaRecursosActividad)
+                                {
+                                    <tr>
+                                        <td class="">
+                                            @(recurso.Nombre.Substring(0, recurso.Nombre.Length > 30 ? 30 : recurso.Nombre.Length))...
+                                        </td>
+                                        <td class="">
+                                            @(recurso.Link.Substring(0, recurso.Link.Length > 30 ? 30 : recurso.Link.Length))...
+                                            <a @onclick=@(e => CopiarLink(recurso.Link))>      <i class="fas fa-link textoNegro"></i>   </a>
+                                            <a @onclick=@(e => CopiarInfoRecurso(recurso))>    <i class="far fa-copy textoNegro"></i>   </a>
+                                        </td>
+                                        <td class="button alert">
+                                            <button @onclick=@(e => DesvincularRecurso(recurso))>Desvincular</button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+
+
+            <!--TABLA DE ACTIVIDADES-->
+            <div class="tablaActividades" id="tablaRecursos">
+
+                <!--Titulos /!-->
+                <table class="tablaActividades_Alumnos">
+                    <tbody>
+                        <tr>
+                            <td class="TamCelda alturaCelda texto_TituloTabla_Blancotexto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">
+                                Valor
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="TamCelda alturaCelda texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">
+                                Nombre
+                                <a class="boton botonAlumno" @onclick=@(AgregarAlumno)>Nuevo Alumno</a>
+                            </td>
+                        </tr>
+                        @foreach (var alumno in Grupo.Alumnos)
+                        {
+                            <tr>
+                                <a class="linea">
+                                    <td class="TamCelda alturaCelda cotenedorAlumno">
+                                        @(alumno.NumeroLista)
+                                        @if (alumno.NumeroLista == 1)
+                                        {
+                                            <a @onclick=@(e => AumentarNumeroLista(alumno.NumeroLista)) class="moverNumeroLista"><i class="fas fa-caret-square-down"></i></a>
+                                            <a class="moverNumeroLista" style="color:lightgray;"><i class="fas fa-caret-square-up"></i></a>
+                                        }
+                                        else
+                                        {
+                                            if (alumno.NumeroLista == Grupo.Alumnos.Count())
+                                            {
+                                                <a class="moverNumeroLista" style="color:lightgray;"><i class="fas fa-caret-square-down"></i></a>
+                                                <a @onclick=@(e => DisminuirNumeroLista(alumno.NumeroLista)) class="moverNumeroLista"><i class="fas fa-caret-square-up"></i></a>
+                                            }
+                                            else
+                                            {
+                                                <a @onclick=@(e => AumentarNumeroLista(alumno.NumeroLista)) class="moverNumeroLista"><i class="fas fa-caret-square-down"></i></a>
+                                                <a @onclick=@(e => DisminuirNumeroLista(alumno.NumeroLista)) class="moverNumeroLista"><i class="fas fa-caret-square-up"></i></a>
+                                            }
+                                        }
+                                    </td>
+                                    <td class="TamCelda alturaCelda cotenedorAlumno">
+                                        <i class="fas fa-user"></i>
+                                        <a @onclick=@(e => EditarAlumno(alumno.Id))>
+                                            @(alumno.NombreCompleto)
+                                            (@(alumno.Apodo))
+                                        </a>
+
+                                        <a @onclick=@(e => EliminarAlumno(alumno.Id))><i class="fas fa-trash-alt"></i></a>
+                                    </td>
+                                </a>
+                            </tr>
+                        }
+                        <tr>
+                            <td class="TamCelda alturaCelda texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">
+                                PROMEDIOS
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!--Inputs calificaciones /!-->
+                <div class="tablaActividades_Calificaciones">
+                    <table>
+                        <tbody>
+                            <tr>
+                                <!--Porcentajes por calificación /!-->
+                                @foreach (var tipo in Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre])
+                                {
+                                    @if (filtroTipoActividades.Contains(tipo.Key))
+                                    {
+                                        @foreach (var actividad in tipo.Value)
+                                        {
+                                            <td class="TamCelda alturaCelda" style="background-color: @(ClaseEscogida.Color);">
+                                                <div class="contenedor_ActividadPorcentaje texto_TituloTabla_Blanco">
+                                                    <input type="number" class="texto_TituloTabla_Blanco tamCeldaActividades input_ActividadesPorcetaje" value="@(actividad.Porcentaje)"
+                                                            @onchange="@( (ChangeEventArgs __e) => Grupo.Controlador_Actividad_ActualizarPorcentaje(
+                                                                    ClaseEscogida.Nombre, tipo.Key, actividad.Nombre, Convert.ToDouble(__e.Value.ToString())))" />
+                                                    <i class="fas fa-percentage texto_TituloTabla_Blanco"></i>
+                                                </div>
+                                            </td>
+                                        }
+                                        <td class="TamCelda alturaCelda">
+                                            Promedio por:
+                                        </td>
+                                    }
+
+                                }
+                            </tr>
+                            <tr>
+                                <!--Titulo y detalles /!-->
+                                @foreach (var tipo in Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre])
+                                {
+
+                                    @if (filtroTipoActividades.Contains(tipo.Key))
+                                    {
+                                        @foreach (var actividad in tipo.Value)
+                                        {
+                                            <td class="TamCelda alturaCelda" style="background-color: @(ClaseEscogida.Color);">
+                                                <a class="texto-1 texto-Blanco-link" @onclick=@(e => MostrarDetallesActividad(actividad, tipo.Key))
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="@(actividad.Nombre)">
+                                                    @(actividad.FechaAsignacion.ToString("dd-MM-yyyy"))
+                                                    <i class="fas fa-info-circle"></i>
+                                                </a>
+                                            </td>
+                                        }
+                                        <td class="TamCelda alturaCelda">
+                                            @(tipo.Key)
+                                        </td>
+                                    }
+
+                                }
+                            </tr>
+                            <!--Calificaciones de cada alumno por actividad -->
+                            @foreach (var alumno in Grupo.Alumnos)
+                            {
+                                <tr>
+                                    @foreach (var tipo in Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre])
+                                    {
+
+                                        @if (filtroTipoActividades.Contains(tipo.Key))
+                                        {
+                                            @foreach (var actividad in tipo.Value)
+                                            {
+                                                <td class="alturaCelda">
+                                                    <input type="number" class="tamCeldaActividades" style="border: 1px solid @(ClaseEscogida.Color);" value="@(alumno.calificaciones_ClaseTipoActividad_ValorPorcentaje[ClaseEscogida.Nombre][tipo.Key][actividad.Nombre]["calificacion"])"
+                                                            @onchange="@( (ChangeEventArgs __e) => ActualizarCalificacion(tipo.Key, actividad.Nombre, Convert.ToDouble(__e.Value.ToString()), alumno.Id))" />
+                                                </td>
+                                            }
+                                            <td class="TamCelda alturaCelda">
+                                                @((Math.Round(alumno.Promedios_ClaseTipos_CalificacionPorcentaje[Grupo.Clases[ClaseIndice].Nombre][tipo.Key]["calificacion"], decimales)))
+                                            </td>
+                                        }
+
+                                    }
+                                </tr>
+                            }
+
+                            <!--Promedio por actividad -->
+                            <tr>
+                                @foreach (var tipo in Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre])
+                                {
+
+                                    @if (filtroTipoActividades.Contains(tipo.Key))
+                                    {
+                                        @foreach (var actividad in tipo.Value)
+                                        {
+                                            <td class="TamCelda alturaCelda texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">
+                                                @(Math.Round(actividad.Promedio, decimales))
+                                            </td>
+                                        }
+
+                                        <td class="TamCelda alturaCelda">
+                                            (@(Grupo.Clases[ClaseIndice].PromediosTipo[tipo.Key]["porcentaje"]) %)
+                                            @(Math.Round(Grupo.Clases[ClaseIndice].PromediosTipo[tipo.Key]["promedio"], decimales))
+                                        </td>
+                                    }
+                                }
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+
+                <!--Promedio por alumno /!-->
+                <table class="tablaActividades_Alumnos">
+                    <tbody>
+                        <tr>
+                            <th class="TamCelda alturaCelda texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);"></th>
+                        </tr>
+                        <tr>
+                            <th class="TamCelda alturaCelda texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">promedio</th>
+                        </tr>
+                        @foreach (var alumno in Grupo.Alumnos)
+                        {
+
+                            <tr>
+                                <td class="TamCelda alturaCelda">@(Math.Round(alumno.Promedio_Clase_PromedioPorcentaje[Grupo.Clases[ClaseIndice].Nombre]["promedio"], decimales))</td>
+                            </tr>
+                        }
+
+                        <tr>
+                            <td class="TamCelda alturaCelda texto-1 texto-Blanco" style="background-color: @(ClaseEscogida.Color);">@(Math.Round(Grupo.Clases[ClaseIndice].Promedio, decimales)) (sin A.)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+
+            </div>
+
+            <div>
+                Ningún promedio en la tabla se afectados por la asistencia. El valor de la asistencia sólo influyen en los promedios generales 
+                por alumno y por grupo
+            </div>
+
+
+
+
+
+
+
+
+
+
+        }
+    </div>
+
+    }
+
+
+@code {
+    #region ESTE ES EL SET QUE REQUIERES PARA INICAR CADA VISTA
+    public Grupo Grupo = new Grupo("Grupo1", "Anita", 2021, 2);
+    public bool bandera = false;
+    protected override async Task OnInitializedAsync()
+    {
+        if (bandera == false)
+        {
+            Iniciar();
+        }
+    }
+    private void Iniciar()
+    {
+        CargarGrupo();
+        CargarTiposActividades();
+        CargarCalificaciones_ActividadAlumno();
+        CargarAsistencias();
+        bandera = true;
+    }
+    public void CargarGrupo()
+    {
+        DateTime horario = new DateTime(2021, 01, 25);
+        Horario horarioClase = new Horario(horario, horario);
+
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Maria", "rosa" }, new List<string> { "Lopez", "Herrera" },
+        "Mari", new DateTime(1996, 09, 06), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Juan", "Luis" }, new List<string> { "Hernandez", "Lopez" },
+            "El chino", new DateTime(1991, 09, 24), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "pablo", "Miguel" }, new List<string> { "Rodriguez", "Rodriguez" },
+        "Migue", new DateTime(1996, 09, 06), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "José", "Juan" }, new List<string> { "Gonzalez", "Gonzalez" },
+            "Juanito", new DateTime(2001, 12, 12), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Maria", "Luisa" }, new List<string> { "Lopez", "Lopez" },
+            "Malu", new DateTime(1994, 12, 23), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Juan", "Miguel" }, new List<string> { "Hernandez", "Herrera" },
+            "Juanmi", new DateTime(1996, 09, 06), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Luis", "Maria" }, new List<string> { "Rodriguez", "Lopez" },
+            "May", new DateTime(1991, 09, 24), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "pablo", "Juan" }, new List<string> { "Gonzalez", "Rodriguez" },
+        "chino", new DateTime(1996, 09, 06), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Francisco", "José" }, new List<string> { "Lopez", "Gonzalez" },
+            "Pepe", new DateTime(2001, 12, 12), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+        Grupo.Alumnos.Add(new Alumno(new List<string> { "Miguel", "José" }, new List<string> { "Hernandez", "Herrera" },
+            "Pepito", new DateTime(1994, 12, 23), "Grupo1", "", Grupo.Alumnos.Count() + 1));
+
+        Grupo.Controlador_Clase_Crear("Clase1", Grupo.Colores[Grupo.Clases.Count()], 2021, horarioClase);
+        Grupo.Controlador_Clase_Crear("Clase2", Grupo.Colores[Grupo.Clases.Count()], 2021, horarioClase);
+        Grupo.Controlador_Clase_Crear("Clase3", Grupo.Colores[Grupo.Clases.Count()], 2021, horarioClase);
+
+    }
+    public void CargarTiposActividades()
+    {
+        DateTime horario = new DateTime(2021, 01, 25);
+        Horario horarioClase = new Horario(horario, horario);
+        List<string> RecursosIds = new List<string>() { };
+
+        Grupo.Controlador_Recurso_Crear("recurso 1", "este es un recurso", "www.bing.com", new List<string>() { "tareas", "actividades" },
+            new List<string>() { "seesaw", "youtube" }, horario);
+        Grupo.Controlador_Recurso_Crear("recurso 2", "este es un recurso", "www.bing.com", new List<string>() { "tareas", "actividades" },
+            new List<string>() { "seesaw", "youtube" }, horario);
+        Grupo.Controlador_Recurso_Crear("recurso 3", "este es un recurso", "www.bing.com", new List<string>() { "tareas", "actividades" },
+            new List<string>() { "seesaw", "youtube" }, horario);
+        Grupo.Controlador_Recurso_Crear("recurso 4", "este es un recurso", "www.bing.com", new List<string>() { "tareas", "actividades" },
+            new List<string>() { "seesaw", "youtube" }, horario);
+        Grupo.Controlador_Recurso_Crear("recurso 5", "este es un recurso", "www.bing.com", new List<string>() { "tareas", "actividades" },
+            new List<string>() { "seesaw", "youtube" }, horario);
+        Grupo.Recursos_Carpetas.Add("tareas");
+        Grupo.Recursos_Carpetas.Add("actividades");
+        Grupo.Recursos_Carpetas.Add("videos");
+        Grupo.Recursos_Carpetas.Add("seesaw");
+        Grupo.Recursos_Carpetas.Add("youtube");
+        Grupo.Recursos_Carpetas.Add("otros");
+
+        Grupo.Recursos_Etiquetas.Add("tareas");
+        Grupo.Recursos_Etiquetas.Add("actividades");
+        Grupo.Recursos_Etiquetas.Add("videos");
+        Grupo.Recursos_Etiquetas.Add("seesaw");
+        Grupo.Recursos_Etiquetas.Add("youtube");
+        Grupo.Recursos_Etiquetas.Add("otros");
+
+        //Agregar parámetros
+        foreach (var clase in Grupo.Clases)
+        {
+            Grupo.Controlador_EvaluacionParametro_Crear(clase.Nombre, new Dictionary<string, double>() {
+            { "Examen", 3}, { "Actividad", 2},
+            { "Sin calificacion", 0}, { "Tarea", 2},
+            { "Proyecto", 3}, { "Extra", 2}});
+        }
+
+        //Agregar los recursos creados
+        foreach (var recurso in Grupo.Recursos)
+        {
+            RecursosIds.Add(recurso.Id);
+        }
+
+        //Agregar las actividades
+        foreach (var clase in Grupo.Actividades)
+        {
+            foreach (var tipo in clase.Value)
+            {
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 1", tipo.Key, "instruccion de hacer actividad 1",
+                    horario, horario, "esta es una nota para la actividad 1", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 2", tipo.Key, "instruccion de hacer actividad 2",
+                    horario, horario, "esta es una nota para la actividad 2", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 3", tipo.Key, "instruccion de hacer actividad 3",
+                    horario, horario, "esta es una nota para la actividad 3", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 4", tipo.Key, "instruccion de hacer actividad 4",
+                    horario, horario, "esta es una nota para la actividad 4", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 5", tipo.Key, "instruccion de hacer actividad 5",
+                    horario, horario, "esta es una nota para la actividad 5", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 6", tipo.Key, "instruccion de hacer actividad 6",
+                    horario, horario, "esta es una nota para la actividad 6", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 7", tipo.Key, "instruccion de hacer actividad 7",
+                    horario, horario, "esta es una nota para la actividad 7", 1, RecursosIds);
+                Grupo.Controlador_Actividad_Crear(clase.Key, "actividad 8", tipo.Key, "instruccion de hacer actividad 8",
+                    horario, horario, "esta es una nota para la actividad 8", 1, RecursosIds);
+            }
+        };
+
+    }
+    public void CargarCalificaciones_ActividadAlumno()
+    {
+        ///cada alumno tiene un diccionario de diccionarios donde:
+        ///{clase: {actividad: calificación} }
+        ///primero see agregará el dicionario {clase : new diccionario} en el primer foreach de alumnos
+        ///en el segundo foreach de alumnos de están agregar las calificaciones de cada actividad en la clase
+
+        foreach (var clase in Grupo.Actividades)
+        {
+            foreach (var tipo in clase.Value)
+            {
+                foreach (var actividad in tipo.Value)
+                {
+                    foreach (var alumno in Grupo.Alumnos)
+                    {
+                        Grupo.Controlador_Actividad_ActualizarCalificacion(clase.Key, tipo.Key, actividad.Nombre, 8, alumno.Id);
+                    }
+                }
+            }
+        }
+    }
+    public void CargarAsistencias()
+    {
+        foreach (var alumno in Grupo.Alumnos)
+        {
+            alumno.Asistencia_ActualizarPorcentaje(1);
+            alumno.Asistencias_Agregar();
+            alumno.Asistencias_Agregar();
+            alumno.Asistencias_Agregar();
+            alumno.Asistencias_Agregar();
+            alumno.Asistencias_Agregar();
+        }
+    }
+    #endregion
+
+
+
+    public bool banderaClase = false;
+    public bool banderaEditarClase = false;
+    public Clase ClaseEscogida;
+    public int ClaseIndice;
+    public string ClaseEditorMensaje = "";
+    public string nuevoNombreClase = "";
+    public bool admitirCambiosClase = true;
+
+
+    public bool banderaActivdad = false;
+    public bool banderaEditarActividad = false;
+    public string nuevoNombreActividad = "";
+    public Actividad actividadEscogida;
+    public int actividadIndice;
+    public string tipoActividadEscogida;
+    public string ActividadEditorMensaje;
+    public bool admitirCambiosActividad;
+    public List<Recurso> listaRecursosActividad;
+
+
+    public bool banderaNuevaActividad = false;
+    public bool banderaCategoriaActividad = false;
+    public string ActividadNuevaClase = "";
+
+    public bool banderaEditarAlumno = false;
+    public Alumno alumnoAEditar;
+    public string alumnoEditarId = "";
+
+    public bool banderaRecursos = false;
+    public Recurso nuevoRecurso = new Recurso("", "", "", new DateTime(2021, 02, 28), new List<String>() { }, new List<String>() { });
+    public List<Recurso> recursosNoEnlazados = new List<Recurso>() { };
+    public List<Recurso> recursosSiEnlazados = new List<Recurso>() { };
+    public string mensajeRecurso = "";
+    public string RecursoEditar = "";
+    public int RecursoEditarIndice = -1;
+
+
+    public int decimales = 2;
+    public List<string> filtroTipoActividades = new List<string>();
+
+
+    public string mostrarAsistencia = "contenedorContraido";
+    public string mostrarPromedios = "contenedorContraido";
+
+    public void ActualizarNombreGrupo(string nombre)
+    {
+        Grupo.Actualizar_Nombre(nombre);
+    }
+
+    public void ActualizarGeneracionGrupo(int generacion)
+    {
+        Grupo.Actualizar_Generacion(generacion);
+    }
+
+    public void ActualizarGradoGrupo(string grado)
+    {
+        Grupo.Actualizar_Grado(grado);
+    }
+
+    public void VerOcultarContenedorAsistencia()
+    {
+        if (mostrarAsistencia == "contenedorContraido")
+        {
+            mostrarAsistencia = "contenedorExpandido";
+        }
+        else
+        {
+            mostrarAsistencia = "contenedorContraido";
+        }
+    }
+
+    public void VerOcultarContenedorPromedio()
+    {
+        if (mostrarPromedios == "contenedorContraido")
+        {
+            mostrarPromedios = "contenedorExpandido";
+        }
+        else
+        {
+            mostrarPromedios = "contenedorContraido";
+        }
+    }
+
+
+    public void EliminarClase()
+    {
+        string claseBorrada = ClaseEscogida.Nombre;
+        ClaseEscogida = null;
+        banderaClase = false;
+        ClaseIndice = -1;
+        Grupo.Controlador_Clase_Eliminar(claseBorrada);
+    }
+
+    public void AgregarClase()
+    {
+        DateTime horario = new DateTime(2021, 01, 25);
+        Horario horarioClase = new Horario(horario, horario);
+        string nombreClase = "Clase" + (Grupo.Clases.Count() + 1);
+        Grupo.Controlador_Clase_Crear(nombreClase, Grupo.Colores[Grupo.Clases.Count()], 2021, horarioClase);
+        int index = Grupo.Clases.IndexOf(Grupo.Clases.Where(p => p.Nombre == nombreClase).FirstOrDefault());
+        ClaseIndice = index;
+        ClaseEscogida = Grupo.ClonarClase(Grupo.Clases[index]);
+        banderaClase = true;
+        FiltrarTodosTiposActividades();
+        banderaEditarClase = true;
+    }
+
+    public void MostrarClase(Clase clase)
+    {
+        ClaseEscogida = Grupo.ClonarClase(clase);
+        int index = Grupo.Clases.IndexOf(Grupo.Clases.Where(p => p.Id == clase.Id).FirstOrDefault());
+        ClaseIndice = index;
+        banderaClase = true;
+        FiltrarTodosTiposActividades();
+    }
+
+    public void EditarClase()
+    {
+        banderaEditarClase = true;
+    }
+
+    public void DescartarCambiosClase()
+    {
+        ClaseEscogida = Grupo.ClonarClase(Grupo.Clases[ClaseIndice]);
+        banderaEditarClase = false;
+        nuevoNombreClase = "";
+        ClaseEditorMensaje = "";
+        admitirCambiosClase = true;
+    }
+
+    public void GuardarCambiosClase()
+    {
+        if (nuevoNombreClase == null || nuevoNombreClase == "")
+        {
+            nuevoNombreClase = ClaseEscogida.Nombre;
+            ClaseEditorMensaje = "";
+        }
+
+        int index = Grupo.Clases.IndexOf(Grupo.Clases.Where(p => p.Nombre == nuevoNombreClase).FirstOrDefault());
+
+        if (ClaseIndice == index || index < 0)
+        {
+            if (ClaseEscogida.ClasePorcentaje >= 0)
+            {
+                if (admitirCambiosClase == true)
+                {
+                    Grupo.Controlador_Clase_ActualizarPropiedades(ClaseIndice, nuevoNombreClase, ClaseEscogida.Color,
+                        ClaseEscogida.Generacion, ClaseEscogida.Horario, ClaseEscogida.ClasePorcentaje);
+                    ClaseIndice = Grupo.Clases.IndexOf(Grupo.Clases.Where(p => p.Nombre == nuevoNombreClase).FirstOrDefault());
+                    ClaseEscogida = Grupo.Clases[ClaseIndice];
+                    banderaEditarClase = false;
+                    nuevoNombreClase = "";
+                    ClaseEditorMensaje = "";
+                    admitirCambiosClase = true;
+
+                }
+                else
+                {
+                    ClaseEditorMensaje = "Por favor revise todos los parámetros";
+                    admitirCambiosClase = false;
+                }
+
+            }
+            else
+            {
+                ClaseEditorMensaje = "El porcentaje de la clase debe ser al menos cero [0]";
+                admitirCambiosClase = false;
+            }
+        }
+        else
+        {
+            ClaseEditorMensaje = "Nombre está en uso";
+            admitirCambiosClase = false;
+        }
+
+    }
+
+    public void CerrarEditarClase()
+    {
+        banderaEditarClase = false;
+    }
+
+    public void ActualizarColor(string color)
+    {
+        ClaseEscogida.ActualizarColor(color);
+    }
+
+    public void AgregarParametro()
+    {
+        string nombre = "Nuevo Parametro" + (ClaseEscogida.PromediosTipo.Count() + 1).ToString();
+        Grupo.Controlador_EvaluacionParametro_Crear(ClaseEscogida.Nombre, new Dictionary<string, double>() { { nombre, 1 } });
+        ClaseEscogida.PromediosTipo_Crear("Nuevo Parametro" + (ClaseEscogida.PromediosTipo.Count() + 1).ToString(), 0, 1);
+    }
+
+    public void ConfirmarEliminacionParametro()
+    {
+
+    }
+
+    public void actualizarNombreParametro(string parametro, string nuevoNombre)
+    {
+        if (nuevoNombre != null && nuevoNombre != "")
+        {
+            if (ClaseEscogida.PromediosTipo.ContainsKey(parametro) && !ClaseEscogida.PromediosTipo.ContainsKey(nuevoNombre))
+            {
+                ClaseEscogida.PromediosTipo_ActualizaNombre(parametro, nuevoNombre);
+                ClaseEditorMensaje = "";
+                admitirCambiosClase = true;
+            }
+            else
+            {
+                if (parametro == nuevoNombre)
+                {
+                    ClaseEscogida.PromediosTipo_ActualizaNombre(parametro, nuevoNombre);
+                    ClaseEditorMensaje = "";
+                    admitirCambiosClase = true;
+                }
+
+                ClaseEditorMensaje = "El parámetro no ha sido encontrado o el nuevo nombre ya está en uso";
+                admitirCambiosClase = false;
+            }
+        }
+        else
+        {
+            ClaseEditorMensaje = "El parametro debe tener un nombre";
+            admitirCambiosClase = false;
+        }
+    }
+
+    public void actualizarValorParametro(string parametro, double valor)
+    {
+        if (valor >= 0)
+        {
+            ClaseEscogida.PromediosTipo_ActualizaPorcentaje(parametro, valor);
+            ClaseEditorMensaje = "";
+            admitirCambiosClase = true;
+        }
+        else
+        {
+            ClaseEscogida.PromediosTipo_ActualizaPorcentaje(parametro, valor);
+            ClaseEditorMensaje = "El valor del parámetro debe ser mayor a cero [0]";
+            admitirCambiosClase = false;
+        }
+
+    }
+
+    public void FiltrarTodosTiposActividades()
+    {
+        filtroTipoActividades = new List<string>();
+        foreach (var tipo in ClaseEscogida.PromediosTipo)
+        {
+            filtroTipoActividades.Add(tipo.Key);
+        }
+    }
+
+
+
+    public void CrearNuevaActividad()
+    {
+        tipoActividadEscogida = Grupo.Actividades[ClaseEscogida.Nombre].ElementAt(0).Key;
+        Grupo.Controlador_Actividad_Crear(ClaseEscogida.Nombre, "nueva actividad", tipoActividadEscogida, "",
+            DateTime.Today, DateTime.Today, "", 1, new List<string>());
+
+        actividadIndice = Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida].IndexOf(Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida].Where(p => p.Nombre == "nueva actividad").FirstOrDefault());
+        actividadEscogida = Grupo.ClonarActividad(Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice]);
+        listaRecursosActividad = Grupo.ClonarRecursosDeActividad(Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice].RecursosId);
+        banderaActivdad = true;
+        banderaEditarActividad = true;
+    }
+
+    public void EliminarActividad()
+    {
+        banderaActivdad = false;
+        actividadIndice = -1;
+        string nombre = actividadEscogida.Nombre;
+        string tipo = tipoActividadEscogida;
+        actividadEscogida = null;
+        tipoActividadEscogida = null;
+        Grupo.Controlador_Actividad_Eliminar(Grupo.Clases[ClaseIndice].Nombre, tipo, nombre);
+    }
+
+
+    public void MostrarDetallesActividad(Actividad actividad, string tipoNombre)
+    {
+        banderaActivdad = true;
+        actividadIndice = Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoNombre].IndexOf(Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoNombre].Where(p => p.Nombre == actividad.Nombre).FirstOrDefault());
+        actividadEscogida = Grupo.ClonarActividad(actividad);
+        tipoActividadEscogida = tipoNombre;
+        listaRecursosActividad = Grupo.ClonarRecursosDeActividad(actividad.RecursosId);
+    }
+
+    public void ModalEditarActividad()
+    {
+        banderaEditarActividad = true;
+    }
+
+    public void DescartarCambiosActividad()
+    {
+        actividadEscogida = Grupo.ClonarActividad(Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice]);
+        banderaEditarActividad = false;
+        nuevoNombreActividad = "";
+        ActividadEditorMensaje = "";
+        admitirCambiosActividad = true;
+    }
+
+    public void GuardarCambiosActividad()
+    {
+        if (nuevoNombreActividad == null || nuevoNombreActividad == "")
+        {
+            nuevoNombreActividad = Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice].Nombre;
+            ActividadEditorMensaje = "";
+            admitirCambiosActividad = true;
+        }
+
+        if (admitirCambiosClase == true)
+        {
+            Grupo.Controlador_Actividad_ActualizarDatos(Grupo.Clases[ClaseIndice].Nombre, Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice].Nombre,
+                nuevoNombreActividad, Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice].TipoActividad, actividadEscogida.TipoActividad,
+                actividadEscogida.Instruccion, actividadEscogida.FechaAsignacion, actividadEscogida.FechaEntrega, actividadEscogida.Nota, actividadEscogida.Porcentaje);
+
+            banderaEditarActividad = false;
+            ActividadEditorMensaje = "";
+            nuevoNombreActividad = "";
+            actividadEscogida = Grupo.ClonarActividad(Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice]);
+        }
+        else
+        {
+            ActividadEditorMensaje = "Por favor revise que todos los parámetros sean correctos";
+            admitirCambiosActividad = false;
+        }
+    }
+
+    public void ActualizarNombreActividad(string nombre)
+    {
+        int coincidencias = 0;
+        foreach (var tipo in Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre])
+        {
+            foreach (var actividad in tipo.Value)
+            {
+                if (actividad.Nombre == nombre)
+                {
+                    coincidencias++;
+                    ActividadEditorMensaje = "El nombre de la actividad ya está en uso";
+                    admitirCambiosActividad = false;
+                }
+            }
+        }
+        if (Grupo.Actividades[Grupo.Clases[ClaseIndice].Nombre][tipoActividadEscogida][actividadIndice].Nombre == nombre && coincidencias > 0)
+        {
+            coincidencias = coincidencias - 1;
+            ActividadEditorMensaje = "";
+        }
+
+        if (coincidencias == 0)
+        {
+            ActividadEditorMensaje = "";
+            admitirCambiosActividad = true;
+            nuevoNombreActividad = nombre;
+        }
+        else
+        {
+            ActividadEditorMensaje = "Inválido";
+            ActividadEditorMensaje = "El nombre de la actividad ya está en uso";
+            admitirCambiosActividad = false;
+        }
+    }
+
+
+    public void DisminuirNumeroLista(int numero)
+    {
+        Grupo.Controlador_Alumno_DisminuirNumeroLista(numero);
+    }
+
+    public void AumentarNumeroLista(int numero)
+    {
+        Grupo.Controlador_Alumno_AumentarNumeroLista(numero);
+        StateHasChanged();
+    }
+
+    public void ActualizarCalificacion(string tipoNombre, string actividadNombre, double calificacion, string alumnoId)
+    {
+        if (calificacion >= 0 && calificacion <= 10)
+        {
+            Grupo.Controlador_Actividad_ActualizarCalificacion(ClaseEscogida.Nombre, tipoNombre, actividadNombre, calificacion, alumnoId);
+
+        }
+        else
+        {
+            int indice = Grupo.Alumnos.IndexOf(Grupo.Alumnos.Where(p => p.Id == alumnoId).FirstOrDefault());
+            Grupo.Controlador_Actividad_ActualizarCalificacion(ClaseEscogida.Nombre, tipoNombre, actividadNombre,
+            Grupo.Alumnos[indice].calificaciones_ClaseTipoActividad_ValorPorcentaje[ClaseEscogida.Nombre][tipoNombre][actividadNombre]["calificacion"],
+            alumnoId);
+        }
+    }
+
+
+
+
+
+
+    async Task CopiarLink(string link)
+    {
+        string texto = link;
+        await JsRuntime.InvokeVoidAsync("CopiarLink", texto);
+    }
+
+    async Task CopiarInfoRecurso(Recurso recurso)
+    {
+        string nombre = recurso.Nombre;
+        string link = recurso.Link;
+        string fecha = recurso.Fecha.ToString("dd/MM/yyyy");
+        await JsRuntime.InvokeVoidAsync("CopiarInfoRecurso", nombre, link, fecha);
+    }
+
+    public void AgregarRecursos()
+    {
+        banderaRecursos = true;
+        Recurso nuevoRecurso = new Recurso("", "", "", new DateTime(2021, 02, 28), new List<String>() { }, new List<String>() { });
+        foreach (var recurso in Grupo.Recursos)
+        {
+            if (actividadEscogida.RecursosId.Contains(recurso.Id))
+            {
+                recursosSiEnlazados.Add(recurso);
+            }
+            else
+            {
+                recursosNoEnlazados.Add(recurso);
+            }
+
+        }
+    }
+
+    public void EliminarDeRecursosEnlazdos(Recurso recurso)
+    {
+        recursosNoEnlazados.Add(recurso);
+        recursosSiEnlazados.Remove(recurso);
+        actividadEscogida.RecursosId_Eliminar(recurso.Id);
+        listaRecursosActividad.Remove(recurso);
+        Grupo.Actividades[ClaseEscogida.Nombre][tipoActividadEscogida][actividadIndice].Recursos_Eliminar(recurso.Id);
+    }
+
+    public void AgregarARecursosEnlazdos(Recurso recurso)
+    {
+        recursosSiEnlazados.Add(recurso);
+        recursosNoEnlazados.Remove(recurso);
+        actividadEscogida.RecursosId.Add(recurso.Id);
+        listaRecursosActividad.Add(recurso);
+        Grupo.Actividades[ClaseEscogida.Nombre][tipoActividadEscogida][actividadIndice].RecursosId_Agregar(new List<string>() { recurso.Id });
+    }
+
+    public void CerrarModalAgregarRecursos()
+    {
+        banderaRecursos = false;
+        Recurso nuevoRecurso = new Recurso("", "", "", new DateTime(2021, 02, 28), new List<String>() { }, new List<String>() { });
+        recursosSiEnlazados = new List<Recurso>() { };
+        recursosNoEnlazados = new List<Recurso>() { };
+    }
+
+    public void EditarRecurso(Recurso recurso)
+    {
+        nuevoRecurso = recurso;
+        RecursoEditar = recurso.Nombre;
+        RecursoEditarIndice = Grupo.Recursos.IndexOf(recurso);
+    }
+
+    public void CrearNuevoRecurso()
+    {
+        if (RecursoEditarIndice > 0)
+        {
+            if (nuevoRecurso.Nombre != null && nuevoRecurso.Nombre != "")
+            {
+                Grupo.Recursos[RecursoEditarIndice] = nuevoRecurso;
+                mensajeRecurso = "";
+                nuevoRecurso = new Recurso("", "", "", new DateTime(2021, 02, 28), new List<String>() { }, new List<String>() { });
+                RecursoEditar = "";
+                RecursoEditarIndice = -1;
+            }
+            else
+            {
+                mensajeRecurso = "Por favor indique un nombre (no usado previamente)";
+            }
+        }
+        else
+        {
+            int index = Grupo.Recursos.IndexOf(Grupo.Recursos.Where(p => p.Nombre == nuevoRecurso.Nombre).FirstOrDefault());
+            if (nuevoRecurso.Nombre != null && nuevoRecurso.Nombre != "" && index < 0)
+            {
+                Grupo.Recursos.Add(nuevoRecurso);
+                recursosSiEnlazados.Add(nuevoRecurso);
+                mensajeRecurso = "";
+                nuevoRecurso = new Recurso("", "", "", new DateTime(2021, 02, 28), new List<String>() { }, new List<String>() { });
+            }
+            else
+            {
+                mensajeRecurso = "Por favor indique un nombre (no usado previamente)";
+            }
+        }
+
+
+    }
+
+    public void AgregarEtiqueta_NuevoRecurso(string etiqueta)
+    {
+        if (nuevoRecurso.Etiquetas.Contains(etiqueta))
+        {
+            nuevoRecurso.Etiquetas_Eliminar(etiqueta);
+        }
+        else
+        {
+            nuevoRecurso.Etiquetas_Agregar(new List<string>() { etiqueta });
+        }
+    }
+
+    public void AgregarCarpeta_NuevoRecurso(string carpeta)
+    {
+        if (nuevoRecurso.Carpetas.Contains(carpeta))
+        {
+            nuevoRecurso.Carpetas_Eliminar(carpeta);
+        }
+        else
+        {
+            nuevoRecurso.Carpetas_Agregar(new List<string>() { carpeta });
+        }
+    }
+
+    public void DesvincularRecurso(Recurso recurso)
+    {
+        actividadEscogida.RecursosId_Eliminar(recurso.Id);
+        listaRecursosActividad.Remove(recurso);
+        Grupo.Actividades[ClaseEscogida.Nombre][tipoActividadEscogida][actividadIndice].Recursos_Eliminar(recurso.Id);
+    }
+
+
+
+    public void ActualizarAsistencia(string id, DateTime fecha)
+    {
+        int index = Grupo.Alumnos.IndexOf(Grupo.Alumnos.Where(p => p.Id == id).FirstOrDefault());
+        if (Grupo.Alumnos[index].Asistencias[fecha] == false)
+        {
+            Grupo.Alumnos[index].Asistencias_ActualizarValor(fecha, false);
+        }
+        else
+        {
+            Grupo.Alumnos[index].Asistencias_ActualizarValor(fecha, true);
+        }
+    }
+
+    public void ActualizarFechaAsistencia(DateTime fechaVieja, DateTime fechaNueva)
+    {
+        foreach (var alumno in Grupo.Alumnos)
+        {
+            alumno.Asistencias_ActualizarFecha(fechaVieja, fechaNueva);
+        }
+    }
+
+    public void CrearNuevaFechaAsistencia()
+    {
+        foreach (var alumno in Grupo.Alumnos)
+        {
+            alumno.Asistencias_Agregar();
+        }
+    }
+
+    public void EliminarFechaAsistencia(DateTime fecha)
+    {
+        foreach (var alumno in Grupo.Alumnos)
+        {
+            alumno.Asistencias_Eliminar(fecha);
+        }
+    }
+
+    public void actualizarPorcentajeAsistencia(double porcentaje)
+    {
+        foreach (var alumno in Grupo.Alumnos)
+        {
+            alumno.Asistencia_ActualizarPorcentaje(porcentaje);
+        }
+    }
+
+
+
+    public void EliminarAlumno(string idAlumno)
+    {
+        Grupo.Controlador_Alumno_Eliminar(idAlumno);
+        int contador = 1;
+        foreach (var alumno in Grupo.Alumnos)
+        {
+            alumno.Actualizar_NumeroLista(contador);
+            contador++;
+        }
+    }
+
+    public void AgregarAlumno()
+    {
+        string nombre = "Nuevo Alumno " + (Grupo.Alumnos.Count() + 1);
+        Grupo.Controlador_Alumno_Crear(new List<string> { nombre }, new List<string> { "Apellidos" },
+        "", DateTime.Today, Grupo.Nombre, "", Grupo.Alumnos.Count() + 1);
+        nombre = "Nuevo Alumno " + (Grupo.Alumnos.Count());
+    }
+
+    public void EditarAlumno(string alumnoId)
+    {
+        int index = Grupo.Alumnos.IndexOf(Grupo.Alumnos.Where(p => p.Id == alumnoId).FirstOrDefault());
+        banderaEditarAlumno = true;
+        alumnoEditarId = Grupo.Alumnos[index].Id;
+        alumnoAEditar = Grupo.ClonarAlumno(Grupo.Alumnos[index]);
+    }
+
+    public void GuardarCambiosAlumno()
+    {
+        banderaEditarAlumno = false;
+        Grupo.Controlador_Alumno_ActualizarPropiedades(alumnoAEditar, alumnoEditarId);
+        alumnoAEditar = null;
+        alumnoEditarId = "";
+    }
+
+    public void DescartarCambiosAlumno()
+    {
+        banderaEditarAlumno = false;
+        alumnoAEditar = null;
+        alumnoEditarId = "";
+    }
+
+    public void AlumnoEditar_Nombres(string nombres)
+    {
+        string[] nombresNuevos = nombres.Split();
+        List<string> lista = new List<string>() { };
+        foreach (var nombre in nombresNuevos)
+        {
+            lista.Add(nombre);
+        }
+        alumnoAEditar.ActualizarApellidos(lista);
+
+    }
+
+    public void AlumnoEditar_Apellidos(string apellidos)
+    {
+        string[] apellidosNuevos = apellidos.Split();
+        List<string> lista = new List<string>() { };
+        foreach (var nombre in apellidosNuevos)
+        {
+            lista.Add(nombre);
+        }
+        alumnoAEditar.ActualizarApellidos(lista);
+    }
+
+}
+

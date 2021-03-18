@@ -1,0 +1,64 @@
+﻿@page "/"
+@using Escuela.Data
+@using Escuela.Pages
+
+
+<div id="mySidenav" class="sidenav">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="#" @onclick="@( e => ActualizarOpcion("Horario"))" class="linkBlanco"><i class="fas fa-calendar-alt"></i> Horario</a>
+    <a href="#" @onclick="@( e => ActualizarOpcion("Clases"))" class="linkBlanco"> <i class="fas fa-chalkboard-teacher"></i> Clases</a>
+    <a href="#" @onclick="@( e => ActualizarOpcion("Grupo"))" class="linkBlanco"> <i class="fas fa-users"></i> Grupo</a>
+    <a href="#" @onclick="@( e => ActualizarOpcion("Alumnos"))" class="linkBlanco"> <i class="fas fa-user-check"></i> Alumnos</a>
+    <a href="#" @onclick="@( e => ActualizarOpcion("Recursos"))" class="linkBlanco"> <i class="fas fa-pager"></i> Recursos</a>
+</div>
+
+
+<nav class="navbar navbar-expand-lg sombraBox fondoMorado">
+    <div class="container-fluid">
+        <span style="font-size:30px;cursor:pointer; color:white;" onclick="openNav()"> <i class="fas fa-bars"></i></span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+            <div class="navbar-nav">
+                <a class="nav-link linkBlanco" href="#" >Usuario</a>
+                <a class="nav-link linkBlanco" href="#">Configuración</a>
+                <a class="nav-link linkBlanco" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+
+
+
+
+<div class="columns small-12 contenedorGeneral radio-5">
+    @if (opcion == "Clases")
+    {<Maestro_VisorClase />;
+    }
+    @if (opcion == "Alumno")
+    {<Maestro_VisorClase />;
+    }
+    @if (opcion == "Actividad")
+    {<Maestro_VisorClase />;
+    }
+    @if (opcion == "Recursos")
+    {<Maestro_VisorRecursos />;
+    }
+</div>
+
+
+
+
+@code{
+    public string opcion = "Clase";
+
+    private void ActualizarOpcion(string o)
+    {
+        opcion = o;
+    }
+
+}
